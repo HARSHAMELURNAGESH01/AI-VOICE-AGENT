@@ -1,0 +1,7 @@
+anthropic
+python-dotenv
+fastapi
+uvicorn[standard]
+twilio
+python-multipart
+pytest

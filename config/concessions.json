@@ -1,0 +1,27 @@
+{
+  "_comment": "The 'deal menu'. Lena may ONLY offer concessions from this list, and only when the stated condition is met. She cannot invent discounts. Dollar amounts spoken by the agent are validated against this file plus listed rents by the guardrail.",
+  "concessions": [
+    {
+      "id": "waive_app_fee",
+      "offer": "Waive the $45 application fee",
+      "condition": "Caller books a viewing within the next 7 days",
+      "value_usd": 45
+    },
+    {
+      "id": "half_month_free",
+      "offer": "Half month free on a 12-month lease",
+      "condition": "Caller mentions comparing with another property or hesitates on price for a 2BR unit",
+      "value_usd": 925
+    },
+    {
+      "id": "second_parking_free_3mo",
+      "offer": "Second parking spot free for the first 3 months",
+      "condition": "Caller has two vehicles",
+      "value_usd": 150
+    }
+  ],
+  "hard_limits": {
+    "rent_negotiation": "Listed rent is never negotiable by the agent. Requests for lower rent are logged and escalated to the human leasing manager.",
+    "max_total_concession_usd": 925
+  }
+}

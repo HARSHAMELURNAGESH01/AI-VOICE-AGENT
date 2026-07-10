@@ -1,0 +1,56 @@
+{
+  "property": {
+    "name": "Cedar Grove Apartments",
+    "address": "1200 Cedar Grove Lane, Springfield (fictional)",
+    "office_hours": "Mon-Sat 9am-6pm",
+    "pet_policy": "Cats and dogs under 40lbs allowed with $300 deposit. Assistance animals are always welcome with no deposit, as required by law.",
+    "parking": "One assigned spot per unit, $50/month for a second spot",
+    "application_fee": 45,
+    "viewing_slots": [
+      "Tuesday 10:00 AM", "Tuesday 2:00 PM", "Wednesday 11:00 AM",
+      "Thursday 3:00 PM", "Friday 10:00 AM", "Saturday 12:00 PM"
+    ]
+  },
+  "units": [
+    {
+      "unit_id": "A-101",
+      "bedrooms": 1,
+      "bathrooms": 1,
+      "sqft": 640,
+      "rent": 1450,
+      "available": true,
+      "floor": 1,
+      "features": ["in-unit laundry", "balcony"]
+    },
+    {
+      "unit_id": "B-204",
+      "bedrooms": 2,
+      "bathrooms": 1,
+      "sqft": 890,
+      "rent": 1850,
+      "available": true,
+      "floor": 2,
+      "features": ["dishwasher", "walk-in closet"]
+    },
+    {
+      "unit_id": "B-305",
+      "bedrooms": 2,
+      "bathrooms": 2,
+      "sqft": 940,
+      "rent": 2050,
+      "available": true,
+      "floor": 3,
+      "features": ["in-unit laundry", "city view", "dishwasher"]
+    },
+    {
+      "unit_id": "C-102",
+      "bedrooms": 3,
+      "bathrooms": 2,
+      "sqft": 1180,
+      "rent": 2450,
+      "available": false,
+      "floor": 1,
+      "features": ["backyard access", "in-unit laundry"]
+    }
+  ]
+}

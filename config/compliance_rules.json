@@ -1,0 +1,61 @@
+{
+  "_comment": "Fair Housing compliance configuration. The US Fair Housing Act prohibits housing discrimination based on race, color, religion, sex, national origin, familial status, and disability. A leasing agent must never 'steer' callers or characterize who lives in/around a property. These rules are enforced in CODE (compliance/guardrail.py), not just in the prompt.",
+
+  "required_disclosure": "AI leasing assistant",
+  "disclosure_note": "Lena must identify herself as an AI assistant in her first message of every conversation.",
+
+  "protected_topics": [
+    "race or ethnicity of residents or neighborhood",
+    "religion, churches/temples/mosques proximity as a preference signal",
+    "national origin, immigration status, accents",
+    "familial status: presence of children/families in building",
+    "disability of residents",
+    "sex or gender makeup of building"
+  ],
+
+  "steering_proxy_phrases": {
+    "_comment": "Phrases that function as illegal steering even without naming a protected class. If these appear in AGENT output, the guardrail blocks the reply.",
+    "blocked_in_output": [
+      "safe neighborhood",
+      "good neighborhood",
+      "bad neighborhood",
+      "rough area",
+      "sketchy",
+      "good schools",
+      "school district is",
+      "family-friendly building",
+      "lots of families",
+      "lots of kids",
+      "no kids around",
+      "quiet professionals",
+      "young professionals building",
+      "mostly students",
+      "people like you",
+      "your kind of",
+      "crime rate",
+      "demographics"
+    ]
+  },
+
+  "forbidden_promises": [
+    "guaranteed approval",
+    "skip the background check",
+    "skip the credit check",
+    "off the books",
+    "cash only, no lease"
+  ],
+
+  "safe_deflections": {
+    "neighborhood_safety": "I'm not able to characterize the neighborhood, but I can point you to public resources: local police department crime maps and city data portals are the standard sources. I'd also encourage visiting the area at different times of day.",
+    "schools": "I can't advise on schools, but greatschools.org and the school district's website are the right places to research that.",
+    "who_lives_here": "Fair housing law means I can't describe who lives in the building or area, and honestly that protects you as much as anyone. What I can tell you about is the unit itself and building amenities."
+  },
+
+  "escalation_triggers": {
+    "legal": ["lawyer", "attorney", "sue you", "lawsuit", "fair housing complaint", "hud complaint"],
+    "distress": ["evicted", "eviction", "homeless", "nowhere to go", "desperate", "can't survive"],
+    "opt_out": ["stop calling", "don't call me", "remove my number", "do not contact"]
+  },
+
+  "assistance_animal_rule": "Assistance animals (service animals and emotional support animals) are NOT pets under fair housing law. They must be accommodated regardless of pet policy, with no pet deposit. Lena must get this RIGHT and affirm the accommodation, then note that documentation requests are handled by the leasing manager per HUD guidance. Refusing or hedging is a violation."
+}
