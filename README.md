@@ -131,15 +131,21 @@ Then open **http://localhost:8000/dashboard**.
 
 ### Leasing dashboard
 
-Aggregate statistics and one card per call: lead priority, QA result, one-line summary, booking, and SMS status.
+The operations view after every call lands: aggregate stats (total calls, hot leads, viewings booked, QA pass rate) plus a card per conversation with lead priority, QA verdict, one-line summary, booking, and SMS status — so a leasing manager can scan the pipeline in seconds.
 
 ![Leasing dashboard](docs/images/dashboard.png)
 
-### Call detail
+### Call transcript
 
-An expanded call record: handoff summary, follow-up actions for the leasing team, full transcript, compliance details, per-call cost, and the SMS confirmation (phone number redacted).
+What was actually said on the call. Lena’s replies, the caller’s turns, and tool calls (like `check_availability`) are logged in order — the same record the QA supervisor grades and the audit log stores.
 
-![Call detail](docs/images/call-detail.png)
+![Call transcript](docs/images/transcript.png)
+
+### Sales handoff & follow-up
+
+What a human salesperson needs next: concrete follow-up actions, questions the caller asked, concerns, compliance metrics (disclosure, guardrail, empathy, cost, audit hash), and the SMS confirmation that went out after the booking.
+
+![Sales handoff](docs/images/follow-up.png)
 
 ---
 
