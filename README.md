@@ -1,6 +1,6 @@
 # Lena
 
-**Lena — a compliance-first AI voice agent for apartment leasing.**
+**Lena — a AI voice agent for apartment leasing.**
 
 Lena is a full-stack demonstration project that shows how a conversational AI agent can operate safely in a regulated industry. She answers rental inquiries over a real phone call, books property viewings, sends SMS confirmations, and delivers a structured summary of every call to the leasing team — while a fair-housing compliance engine, a deterministic output guardrail, an AI QA supervisor, and a tamper-evident audit log ensure the agent never crosses a legal line. The system is validated by an automated red-team evaluation suite of 20 simulated callers. All properties, callers, and conversations are **fictional** — no real leasing data is involved.
 
