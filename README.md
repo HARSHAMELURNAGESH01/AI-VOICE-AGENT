@@ -137,21 +137,9 @@ Aggregate statistics and one card per call: lead priority, QA result, one-line s
 
 ### Call detail
 
-An expanded call record: handoff summary, follow-up actions for the leasing team, full transcript, compliance details, per-call cost, and the composed SMS confirmation.
+An expanded call record: handoff summary, follow-up actions for the leasing team, full transcript, compliance details, per-call cost, and the SMS confirmation (phone number redacted).
 
 ![Call detail](docs/images/call-detail.png)
-
-### Guardrail intervention
-
-The output guardrail intercepting a fair-housing violation before it is spoken, with the event logged for QA.
-
-![Guardrail intervention](docs/images/guardrail-block.png)
-
-### Evaluation report
-
-A red-team evaluation run: 20 simulated callers graded automatically, with guardrail interventions and triggers per persona.
-
-![Evaluation report](docs/images/eval-report.png)
 
 ---
 
