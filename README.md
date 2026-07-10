@@ -147,6 +147,12 @@ What a human salesperson needs next: concrete follow-up actions, questions the c
 
 ![Sales handoff](docs/images/follow-up.png)
 
+### Escalated handoff (human takeover)
+
+Not every call ends in a clean booking. When a caller claims a prior discount, pushes rent negotiation, or asks a fair-housing-sensitive question (e.g. children in the building), Lena escalates instead of improvising — and the handoff spells out exactly what the leasing manager must do next, alongside the compliance scorecard.
+
+![Escalated handoff](docs/images/handoff-escalation.png)
+
 ---
 
 ## Repository Structure
