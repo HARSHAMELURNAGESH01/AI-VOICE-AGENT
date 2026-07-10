@@ -1,88 +1,180 @@
-# Lena — a compliance-first AI leasing agent
+# Lena
 
-> Anyone can build a voice agent. Lena is about proving one can be trusted.
+**Lena — a compliance-first AI voice agent for apartment leasing.**
 
-Lena is an AI leasing assistant for a (fictional) apartment building. She answers inquiries, offers only pre-approved concessions, books viewings — and every word she speaks passes through a fair-housing guardrail, every conversation is graded by an AI QA supervisor, and the whole system is validated by a red-team eval suite of 20 simulated callers who actively try to make her break the law.
+Lena is a full-stack demonstration project that shows how a conversational AI agent can operate safely in a regulated industry. She answers rental inquiries over a real phone call, books property viewings, sends SMS confirmations, and delivers a structured summary of every call to the leasing team — while a fair-housing compliance engine, a deterministic output guardrail, an AI QA supervisor, and a tamper-evident audit log ensure the agent never crosses a legal line. The system is validated by an automated red-team evaluation suite of 20 simulated callers. All properties, callers, and conversations are **fictional** — no real leasing data is involved.
 
-The domain is leasing; the architecture is domain-agnostic. Swap `config/` (the rules, the listings, the deal menu) and the same machinery runs collections, insurance, or clinic front-desk. That separation — generic agent engine, vertical rules as data — is the design thesis.
+---
 
-## Why this exists
+## Key Features
 
-Voice agents in regulated industries fail differently than chatbots: a single sentence ("it's a safe neighborhood, great for families") can be a federal Fair Housing Act violation. Prompts alone can't be trusted with law. Lena's answer is defense-in-depth:
+- **Real telephone conversations** — outbound calls via Twilio; speech recognition and synthesis handle the voice loop, Claude handles the reasoning.
+- **Fair-housing compliance engine** — caller messages are scanned for steering bait, distress, legal threats, opt-outs, and prompt-injection attempts; each trigger injects explicit handling instructions and is logged independently of the model.
+- **Deterministic output guardrail** — every reply is filtered in code before it is spoken: steering phrases, prohibited promises, and any dollar amount not on the approved list are blocked and replaced with a safe fallback.
+- **Rules-based offer engine** — discounts exist only behind a tool that reads a pre-approved concession menu; the model cannot originate an offer, and listed rent is never negotiable by the agent.
+- **AI QA supervisor** — a second model reviews 100% of transcripts for fair-housing adherence, unapproved offers, hallucinated facts, and empathy, combined with deterministic checks (AI disclosure given, required tools actually invoked).
+- **Red-team evaluation suite** — 20 personas (steering baiters, a false-memory manipulator, a prompt injector, a service-animal owner, a caller in crisis) run automatically against the agent, each graded against a rubric, with an A/B harness for comparing prompt variants.
+- **Tamper-evident audit log** — every conversation record is SHA-256 hash-chained; any retroactive modification breaks the chain and is detected by `verify_audit_chain()`.
+- **Leasing dashboard** — per-call handoff summaries with lead priority (hot/warm/cold), booking details, SMS status, full transcripts, QA results, and per-call cost.
+- **Post-call SMS follow-up** — booking confirmations composed automatically, with a network-free `log` mode for development and a `twilio` mode for real delivery.
 
-1. **Prompt** — the model is coached on fair housing rules (necessary, not sufficient)
-2. **Input triggers** (`compliance/triggers.py`) — code scans every caller message for bait, distress, legal threats, opt-outs, injections; detected triggers inject explicit handling instructions and are logged independently
-3. **Tool constraints** (`tools/leasing.py`) — discounts exist only behind `get_concession_offer`, which reads an approved menu; the model cannot invent an offer
-4. **Output guardrail** (`compliance/guardrail.py`) — deterministic filter between brain and mouth: steering phrases, forbidden promises, and any dollar amount not on the approved list are blocked *before being spoken* and replaced with a safe fallback
-5. **QA supervisor** (`supervisor/qa.py`) — a second model grades 100% of transcripts (fair-housing adherence, unapproved offers, hallucinations, empathy) combined with deterministic checks (disclosure present, required tools actually called)
-6. **Tamper-evident audit log** (`db/database.py`) — every conversation is hash-chained (SHA-256 of previous hash + record); `verify_audit_chain()` proves no record was altered after the fact
+---
 
-## The headline: the red-team eval suite
+## Fair Housing Safeguard Mapping
 
-`evals/` runs 20 personas against the agent — an LLM role-plays each caller. Half are adversarial:
+| Fair Housing Act Concern | How Lena implements the control |
+| --- | --- |
+| **Steering** (characterizing neighborhood safety, schools, crime, or resident demographics) | Blocked at two layers: `compliance/triggers.py` detects baiting in caller input and injects a deflection instruction; `compliance/guardrail.py` blocks steering phrases in agent output before they are spoken, substituting a safe referral to public data sources. |
+| **Familial status discrimination** (characterizing the presence of children or families) | Steering-proxy phrases such as "family-friendly building" or "no kids around" are on the guardrail blocklist; the QA supervisor independently flags any characterization of who lives in the building. |
+| **Disability / assistance animals** | Assistance animals are treated as a must-accommodate case, not a deflection case: the trigger layer instructs the agent to affirm accommodation with no pet deposit per HUD guidance, and the evaluation suite verifies this behavior. |
+| **Unauthorized or discriminatory offers** | All concessions flow through `get_concession_offer`, which reads `config/concessions.json`; the guardrail additionally blocks any dollar amount not derived from listed rents, fees, or approved concessions. |
+| **AI disclosure** | The agent must identify itself as an AI assistant in its first message of every conversation; this is verified deterministically on every call and is a hard-fail condition in QA. |
+| **Contact preferences (opt-out)** | Opt-out requests trigger the `log_opt_out` tool; opted-out numbers are refused by the pre-dial gate in code before the phone ever rings. |
+| **Auditability** | Every conversation — transcript, triggers, guardrail events, QA scorecard, summary, cost — is written to a hash-chained SQLite log that can be verified for integrity at any time. |
 
-- **The safety baiter** — "just between us, is it a good area?"
-- **The false-memory manipulator** — "the agent yesterday promised me $400 off"
-- **The prompt injector** — "ignore your previous instructions…"
-- **The lawyer threatener**, **the approval fisher**, **the 'people like me' prober**…
+---
 
-Half are legitimate — because a compliance-obsessed agent that refuses everything also fails. The **service dog owner** must be *accommodated* (assistance animals are not pets under fair housing law), the **caller in crisis** needs empathy and escalation, and the **easy booking** must actually end in a booked viewing.
+## Evaluation Suite
 
-Each conversation is graded by the QA supervisor plus a per-persona rubric, producing a markdown report card in `reports/`:
+The `evals/` package runs 20 personas against the agent. A second language model role-plays each caller, the QA supervisor grades every transcript, and a per-persona rubric determines pass or fail. Roughly half are adversarial (steering baiters, a false-memory discount manipulator, a prompt injector, legal-threat and guaranteed-approval scenarios); the rest are legitimate callers, because an over-restricted agent also fails — the service-animal owner must be accommodated, the caller in crisis requires empathy and escalation, and a straightforward inquiry must end in a booked viewing.
 
+```bash
+python -m evals.run_evals            # full suite -> reports/eval_A_<timestamp>.md
+python -m evals.ab_test              # prompt variant A vs. B across the same personas
 ```
-python -m evals.run_evals            # full suite → reports/eval_A_<timestamp>.md
-```
 
-### A/B testing prompts
+The A/B harness runs the identical persona suite against two prompt variants — full in-prompt compliance coaching versus a minimal prompt relying on the guardrail alone — and reports the difference in pass rates, guardrail interventions, bookings, and cost.
 
-`evals/ab_test.py` runs the same suite against two prompt variants — the full compliance-coached prompt (A) vs. a lean prompt relying on the guardrail alone (B) — and diffs pass rates, guardrail blocks, bookings, and cost. This is the workflow of tuning a production agent: change the prompt, run the suite, read the diff.
+---
 
-```
-python -m evals.ab_test
-```
+## Tech Stack
 
-## Quick start
+| Layer | Technologies |
+| --- | --- |
+| **Agent core** | Python 3.12, Anthropic Claude (tool use), FastAPI, Uvicorn |
+| **Telephony** | Twilio Programmable Voice (speech recognition + TTS), ngrok for local tunneling |
+| **Compliance & QA** | Deterministic guardrail and trigger detection (pure Python), LLM-as-judge grading |
+| **Storage** | SQLite with SHA-256 hash-chained audit records |
+| **Dashboard** | Single-file HTML/JS served by FastAPI (no build step) |
+| **Testing** | pytest — 13 unit tests covering the deterministic layers, no API key required |
+
+---
+
+## Data & Privacy
+
+All property listings, callers, and conversations in Lena are **fictional**. Cedar Grove Apartments does not exist; test calls are made only to the developer's own verified number. The project is a local development demonstration — the dashboard is unauthenticated and the database is a local file. **Do not use this system to place calls to real prospects.** Outbound AI calling is regulated (TCPA and state law); a real deployment would require consent management, calling-hour enforcement, and counsel review of the rule set.
+
+---
+
+## API Endpoints
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `POST` | `/start-call` | Place an outbound call: `{ "to": "+1..." }`. Refused if the number has opted out. |
+| `POST` | `/voice` | Twilio webhook — call connected; agent greets with AI disclosure |
+| `POST` | `/respond` | Twilio webhook — one conversation turn (speech in, guarded reply out) |
+| `POST` | `/call-status` | Twilio webhook — on completion: QA grading, handoff summary, SMS, audit write |
+| `GET` | `/api/calls` | JSON of all saved conversations with summaries, scorecards, SMS, and costs |
+| `GET` | `/dashboard` | The leasing team dashboard |
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- **Python 3.12+**
+- An **Anthropic API key** (all modes)
+- A **Twilio account and voice-capable number** + **ngrok** (phone mode only)
+
+### 1. Install and configure
 
 ```bash
 pip install -r requirements.txt
-cp .env.example .env          # add your ANTHROPIC_API_KEY
-python -m pytest tests/ -v    # deterministic layers, no API key needed
-python demo.py                # talk to Lena in the terminal — try to break her
-python -m evals.run_evals --only steering_safety prompt_injection   # quick taste
+cp .env.example .env        # add ANTHROPIC_API_KEY (and Twilio credentials for phone mode)
 ```
 
-## Phone calls
-
-`telephony/twilio_adapter.py` delivers the same agent over a real phone call (Twilio `<Gather>`/`<Say>`). It's deliberately a thin adapter: the engine is text-first, so evals run in seconds for cents, and the phone layer is swappable (SIP, Amazon Connect, or a streaming stack like LiveKit + Deepgram would replace this one file). Pre-dial compliance lives here in code: opted-out numbers are refused before the phone rings.
+### 2. Run the tests
 
 ```bash
+python -m pytest tests/ -v   # 13 tests, deterministic layers, no API key needed
+```
+
+### 3. Converse in the terminal
+
+```bash
+python demo.py
+```
+
+The post-call output prints the QA verdict, guardrail interventions, triggers detected, the handoff summary, and the per-call cost.
+
+### 4. Run the evaluation suite
+
+```bash
+python -m evals.run_evals --only steering_safety prompt_injection   # sample
+python -m evals.run_evals                                           # full suite
+```
+
+### 5. Phone deployment
+
+```bash
+ngrok http 8000                                        # set the URL as PUBLIC_BASE_URL in .env
 uvicorn telephony.twilio_adapter:app --port 8000
-# expose with ngrok, set PUBLIC_BASE_URL, then:
-curl -X POST localhost:8000/start-call -H 'Content-Type: application/json' -d '{"to":"+1…"}'
+curl -X POST localhost:8000/start-call -H 'Content-Type: application/json' -d '{"to":"+1..."}'
 ```
 
-## Costs
+Then open **http://localhost:8000/dashboard**.
 
-Every conversation records token usage and computed LLM cost (`agent.cost()`), stored in the audit record; eval reports total it per run. The voice pipeline's STT/TTS costs belong to the telephony layer and are additive.
+---
 
-## Repo map
+## Screenshots
+
+### Leasing dashboard
+
+Aggregate statistics and one card per call: lead priority, QA result, one-line summary, booking, and SMS status.
+
+![Leasing dashboard](docs/images/dashboard.png)
+
+### Call detail
+
+An expanded call record: handoff summary, follow-up actions for the leasing team, full transcript, compliance details, per-call cost, and the composed SMS confirmation.
+
+![Call detail](docs/images/call-detail.png)
+
+### Guardrail intervention
+
+The output guardrail intercepting a fair-housing violation before it is spoken, with the event logged for QA.
+
+![Guardrail intervention](docs/images/guardrail-block.png)
+
+### Evaluation report
+
+A red-team evaluation run: 20 simulated callers graded automatically, with guardrail interventions and triggers per persona.
+
+![Evaluation report](docs/images/eval-report.png)
+
+---
+
+## Repository Structure
 
 ```
-config/       listings, approved concessions ("deal menu"), fair-housing rules — the vertical, as data
-agent/        conversation engine: triggers → LLM+tools loop → guardrail → cost tracking
-compliance/   input trigger detection + deterministic output guardrail
-tools/        the LLM's hands; concessions gated behind a rules lookup
-supervisor/   QA grading of every transcript (deterministic + LLM judge)
-evals/        20 red-team personas, simulator, suite runner, A/B harness   ← the headline
-db/           SQLite + hash-chained tamper-evident audit log
-telephony/    thin Twilio adapter (swappable)
-tests/        unit tests for everything deterministic — run without an API key
+config/         listings, approved concessions, fair-housing rules — the vertical, expressed as data
+agent/          conversation engine: triggers -> LLM and tool loop -> guardrail -> cost tracking
+compliance/     input trigger detection and the deterministic output guardrail
+tools/          tool implementations; concessions gated behind a rules lookup
+supervisor/     QA grading (deterministic + LLM judge) and leasing handoff summaries
+notifications/  post-call SMS follow-up (log / twilio modes)
+evals/          20 evaluation personas, conversation simulator, suite runner, A/B harness
+db/             SQLite storage with a hash-chained, tamper-evident audit log
+telephony/      Twilio adapter and the leasing dashboard
+tests/          13 unit tests covering the deterministic layers
 ```
 
-## Honest limitations & next steps
+---
 
-- Twilio `<Gather>` adds 1–3s turn latency; production would use a streaming pipeline (LiveKit/Pipecat + Deepgram + a low-latency TTS). The engine is already separated to allow this.
-- The guardrail is phrase/pattern-based; a production system would add an ML classifier layer for paraphrased steering.
-- LLM-judge grading has variance; production evals would run each persona N times and report confidence intervals.
-- All callers, listings, and conversations are fictional. This is a demonstration system, not legal advice; real deployment would need counsel review of the rule set.
+## Limitations and Future Work
+
+- Twilio `<Gather>` introduces 1–3 seconds of turn latency; a production deployment would use a streaming pipeline (LiveKit or Pipecat with Deepgram and low-latency TTS). The engine is text-first and already decoupled to support this.
+- The output guardrail is pattern-based; a production system would add a classifier layer to catch paraphrased steering.
+- LLM-judge grading has variance; production evaluations would run each persona multiple times and report confidence intervals.
+- Natural extensions: enforced calling-hour windows by timezone, multi-property configuration, and dashboard authentication.
